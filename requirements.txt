@@ -1,1 +1,2 @@
 wheel>=0.22
+-e git://github.com/sibirrer/galkin.git#egg=galkin
