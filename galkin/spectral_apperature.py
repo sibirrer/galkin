@@ -3,20 +3,19 @@ __author__ = 'sibirrer'
 import scipy.ndimage as ndimage
 import numpy as np
 
-from galkin.LOS_dispersion import Velocity_dispersion
+from galkin.LOS_dispersion import Velocity_dispersion_numerical_integral
 
 class Apperature(object):
     """
     this class is aimed to simulate slit and psf effecs of ground based spectrographs
     """
     def __init__(self):
-        self.vel_dispersion = Velocity_dispersion()
-
+        self.vel_dispersion_num = Velocity_dispersion_numerical_integral()
 
     def get_slit_point(self, R_slit, phi_slit, center_x, center_y, psf_fwhm, num_evaluate):
         """
 
-        :param R_slit: Slit lenght [arc sec]
+        :param R_slit: slit length [arc sec]
         :param phi_slit: angle of slit [radian]
         :param center_x: position of center of slit in x-axis
         :param center_y: position of center of slit in y-axis
@@ -48,8 +47,8 @@ class Apperature(object):
         a = 0.551 * r_eff
         for i in range(0, len(grid_x)):
             for j in range(0, len(grid_x[0])):
-                IH_grid[i][j] = self.vel_dispersion.I_H(R[i][j], a, num_log=num_log, r_min=r_min)
-                IH_sigma_s2_grid[i][j] = self.vel_dispersion.I_H_sigma(R[i][j], a, gamma, rho0_r0_gamma, r_ani, num_log=num_log, r_min=r_min)
+                IH_grid[i][j] = self.vel_dispersion_num.I_H(R[i][j], a, num_log=num_log, r_min=r_min)
+                IH_sigma_s2_grid[i][j] = self.vel_dispersion_num.I_H_sigma(R[i][j], a, gamma, rho0_r0_gamma, r_ani, num_log=num_log, r_min=r_min)
         return IH_grid, IH_sigma_s2_grid
 
     def LOS_velocity_dispersion_measure(self, r_eff, gamma, rho0_r0_gamma, r_ani, R_slit, phi_slit=0, center_x=0, center_y=0, psf_fwhm=0.7, num_evaluate=11, num_log=10, r_min=10**(-6)):
