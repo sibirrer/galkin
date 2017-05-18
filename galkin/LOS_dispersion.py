@@ -173,5 +173,5 @@ class Velocity_dispersion(object):
         :param b: 1 - 1/b = beta
         :return:
         """
-        assert( b>0 )
-        return 1. -1./b
+        assert(b > 0)
+        return 1. - 1. / b
