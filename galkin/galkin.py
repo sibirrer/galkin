@@ -1,3 +1,5 @@
+import numpy as np
+
 import velocity_util as util
 from light_profile import LightProfile
 from aperture import Aperture
@@ -40,7 +42,7 @@ class GalKin(object):
             sigma_s2_draw = self._vel_disp_one(kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy)
             sigma_s2_sum += sigma_s2_draw
         sigma_s2_average = sigma_s2_sum/num
-        return sigma_s2_average
+        return np.sqrt(sigma_s2_average)
 
     def _vel_disp_one(self, kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy):
         """

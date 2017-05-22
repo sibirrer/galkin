@@ -40,7 +40,8 @@ class Jeans_solver(object):
         hyp1 = vel_util.hyp_2F1(a=2+gamma, b=gamma, c=3+gamma, z=1./(1+r/a))
         hyp2 = vel_util.hyp_2F1(a=3, b=gamma, c=1+gamma, z=-a/r)
         fac = r_ani**2/a**2 * hyp1 / ((2+gamma) * (r/a + 1)**(2+gamma)) + hyp2 / (gamma*(r/a)**gamma)
-        return prefac1 * prefac2 * fac
+        sigma2_dim_less = prefac1 * prefac2 * fac
+        return sigma2_dim_less * (self.arcsec2phys_lens(1.) * const.Mpc / 1000)**2
 
 
     def _rho0_r0_gamma(self, theta_E, gamma):
@@ -78,6 +79,6 @@ class Jeans_solver(object):
         """
         const_SI = const.c**2 / (4*np.pi * const.G)  #c^2/(4*pi*G) in units of [kg/m]
         conversion = const.Mpc / const.M_sun  # converts [kg/m] to [M_sun/Mpc]
-        const = const_SI*conversion   #c^2/(4*pi*G) in units of [M_sun/Mpc]
-        Epsilon_Crit = self.D_s/(self.D_d*self.D_ds) * const #[M_sun/Mpc^2]
+        pre_const = const_SI*conversion   #c^2/(4*pi*G) in units of [M_sun/Mpc]
+        Epsilon_Crit = self.D_s/(self.D_d*self.D_ds) * pre_const #[M_sun/Mpc^2]
         return Epsilon_Crit
