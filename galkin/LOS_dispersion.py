@@ -3,7 +3,7 @@ __author__ = 'sibirrer'
 import numpy as np
 import velocity_util as vel_util
 import astrofunc.constants as const
-
+import math
 
 class Velocity_dispersion(object):
     """
@@ -134,6 +134,11 @@ class Velocity_dispersion(object):
             r_ani = aniso_param
             beta = self._beta_ani(r, r_ani)
         return (1 - beta * R**2/r**2) * self.sigma_r2(r, a, gamma, rho0_r0_gamma, r_ani)
+
+    def rho0_r0_gamma(self, theta_E, gamma, kappa_ext=0):
+        # equation (14) in Suyu+ 2010
+        return (kappa_ext - 1) * math.gamma(gamma/2.)/(np.sqrt(np.pi)*math.gamma((gamma-3)/2.)) * theta_E**gamma/self.unitManager.arcsec2phys_lens(theta_E) * self.unitManager.cosmoProp.epsilon_crit * const.M_sun/const.Mpc**3  # units kg/m^3
+
 
     def sigma_r2(self, r, a, gamma, rho0_r0_gamma, r_ani):
         """

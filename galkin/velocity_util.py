@@ -24,3 +24,17 @@ def displace_PSF(x, y, FWHM):
     x_ = x + np.random.normal() * sigma_one_direction
     y_ = y + np.random.normal() * sigma_one_direction
     return x_, y_
+
+
+def R_r(r):
+    """
+    draws a random projection from radius r in 2d and 1d
+    :param r: 3d radius
+    :return: R, x, y
+    """
+    phi = np.random.uniform(0, 2*np.pi)
+    theta = np.random.uniform(0, np.pi)
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    R = np.sqrt(x**2 + y**2)
+    return R, x, y

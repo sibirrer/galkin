@@ -1,4 +1,3 @@
-import galkin.velocity_util as util
 import numpy as np
 
 
@@ -15,18 +14,17 @@ class Aperture(object):
         self._aperture_type = aperture_type
         self._fwhm = psf_fwhm
 
-    def aperture_select(self, ra, dec, fwhm, kwargs_aperture):
+    def aperture_select(self, ra, dec, kwargs_aperture):
         """
         returns a bool list if the coordinate is within the aperture (list)
         :param ra:
         :param dec:
         :return:
         """
-        ra_disp, dec_disp = util.displace_PSF(ra, dec, fwhm)
         if self._aperture_type == 'shell':
-            bool_list = self.shell_select(ra_disp, dec_disp, **kwargs_aperture)
+            bool_list = self.shell_select(ra, dec, **kwargs_aperture)
         elif self._aperture_type == 'slit':
-            bool_list = self.slit_select(ra_disp, dec_disp, **kwargs_aperture)
+            bool_list = self.slit_select(ra, dec, **kwargs_aperture)
         else:
             raise ValueError("aperture type %s not implemented!" %self._aperture_type)
         return bool_list
