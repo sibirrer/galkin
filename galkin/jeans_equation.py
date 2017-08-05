@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import velocity_util as vel_util
+from cosmo import Cosmo
 import astrofunc.constants as const
 
 class Jeans_solver(object):
@@ -8,9 +9,7 @@ class Jeans_solver(object):
     class to solve radial Jeans equation for different configuration
     """
     def __init__(self, kwargs_cosmo, mass_profile, light_profile, anisotropy_type):
-        self.D_d = kwargs_cosmo['D_d']
-        self.D_s = kwargs_cosmo['D_s']
-        self.D_ds = kwargs_cosmo['D_ds']
+        self.cosmo = Cosmo(kwargs_cosmo)
         self._mass_profile = mass_profile
         self._light_profile = light_profile
         self._anisotropy_type = anisotropy_type
@@ -41,12 +40,11 @@ class Jeans_solver(object):
         hyp2 = vel_util.hyp_2F1(a=3, b=gamma, c=1+gamma, z=-a/r)
         fac = r_ani**2/a**2 * hyp1 / ((2+gamma) * (r/a + 1)**(2+gamma)) + hyp2 / (gamma*(r/a)**gamma)
         sigma2_dim_less = prefac1 * prefac2 * fac
-        return sigma2_dim_less * (self.arcsec2phys_lens(1.) * const.Mpc / 1000)**2
-
+        return sigma2_dim_less * (self.cosmo.arcsec2phys_lens(1.) * const.Mpc / 1000)**2
 
     def _rho0_r0_gamma(self, theta_E, gamma):
         # equation (14) in Suyu+ 2010
-        return -1 * math.gamma(gamma/2.)/(np.sqrt(np.pi)*math.gamma((gamma-3)/2.)) * theta_E**gamma/self.arcsec2phys_lens(theta_E) * self.epsilon_crit * const.M_sun/const.Mpc**3  # units kg/m^3
+        return -1 * math.gamma(gamma/2.)/(np.sqrt(np.pi)*math.gamma((gamma-3)/2.)) * theta_E**gamma/self.cosmo.arcsec2phys_lens(theta_E) * self.cosmo.epsilon_crit * const.M_sun/const.Mpc**3  # units kg/m^3
 
     def sigma_r2(self, r, kwargs_profile, kwargs_anisotropy, kwargs_light):
         """
@@ -63,22 +61,3 @@ class Jeans_solver(object):
         else:
             raise ValueError('mass profile type %s not implemented in Jeans solver' % self._mass_profile)
         return sigma_r
-
-    def arcsec2phys_lens(self, theta):
-        """
-        converts are seconds to physical units on the deflector
-        :param theta:
-        :return:
-        """
-        return theta * const.arcsec * self.D_d
-
-    @property
-    def epsilon_crit(self):
-        """
-        returns the critical projected mass density in units of M_sun/Mpc^2 (physical units)
-        """
-        const_SI = const.c**2 / (4*np.pi * const.G)  #c^2/(4*pi*G) in units of [kg/m]
-        conversion = const.Mpc / const.M_sun  # converts [kg/m] to [M_sun/Mpc]
-        pre_const = const_SI*conversion   #c^2/(4*pi*G) in units of [M_sun/Mpc]
-        Epsilon_Crit = self.D_s/(self.D_d*self.D_ds) * pre_const #[M_sun/Mpc^2]
-        return Epsilon_Crit

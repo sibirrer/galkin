@@ -2,6 +2,7 @@ __author__ = 'sibirrer'
 
 import numpy as np
 import velocity_util as vel_util
+from cosmo import Cosmo
 import astrofunc.constants as const
 import math
 
@@ -9,9 +10,10 @@ class Velocity_dispersion(object):
     """
     class to compute eqn 20 in Suyu+2010 with a monte-carlo process
     """
-    def __init__(self, beta_const=False, b_prior=False):
+    def __init__(self, beta_const=False, b_prior=False, kwargs_cosmo={'D_d': 1000, 'D_s': 2000, 'D_ds': 500}):
         self.beta_const = beta_const
         self.b_prior = b_prior
+        self.cosmo = Cosmo(kwargs_cosmo)
 
     def anisotropy_set_up(self, beta_const=False, b_prior=False):
         """
@@ -22,7 +24,7 @@ class Velocity_dispersion(object):
         self.beta_const = beta_const
         self.b_prior = b_prior
 
-    def vel_disp(self, gamma, rho0_r0_gamma, r_eff, aniso_param, R_slit, dR_slit, FWHM, num=100):
+    def vel_disp(self, gamma, theta_E, r_eff, aniso_param, R_slit, dR_slit, FWHM, num=100):
         """
         computes the averaged LOS velocity dispersion in the slit (convolved)
         :param gamma:
@@ -36,11 +38,19 @@ class Velocity_dispersion(object):
         if self.b_prior and self.beta_const:
             aniso_param = self.b_beta(aniso_param)
         sigma_s2_sum = 0
+        rho0_r0_gamma = self.rho0_r0_gamma(theta_E, gamma)
+        print rho0_r0_gamma, 'rho0_r0_gamma'
         for i in range(0, num):
             sigma_s2_draw = self.vel_disp_one(gamma, rho0_r0_gamma, r_eff, aniso_param, R_slit, dR_slit, FWHM)
             sigma_s2_sum += sigma_s2_draw
         sigma_s2_average = sigma_s2_sum/num
-        return sigma_s2_average
+        return np.sqrt(sigma_s2_average)
+
+    def rho0_r0_gamma(self, theta_E, gamma):
+        # equation (14) in Suyu+ 2010
+        print self.cosmo.arcsec2phys_lens(theta_E)
+        print self.cosmo.epsilon_crit
+        return -1 * math.gamma(gamma/2)/(np.sqrt(np.pi)*math.gamma((gamma-3)/2.)) * theta_E**gamma/self.cosmo.arcsec2phys_lens(theta_E) * self.cosmo.epsilon_crit * const.M_sun/const.Mpc**3  # units kg/m^3
 
     def vel_disp_one(self, gamma, rho0_r0_gamma, r_eff, aniso_param, R_slit, dR_slit, FWHM):
         """
@@ -145,7 +155,7 @@ class Velocity_dispersion(object):
         hyp1 = vel_util.hyp_2F1(a=2+gamma, b=gamma, c=3+gamma, z=1./(1+r/a))
         hyp2 = vel_util.hyp_2F1(a=3, b=gamma, c=1+gamma, z=-a/r)
         fac = r_ani**2/a**2 * hyp1 / ((2+gamma) * (r/a + 1)**(2+gamma)) + hyp2 / (gamma*(r/a)**gamma)
-        return prefac1 * prefac2 * fac
+        return prefac1 * prefac2 * fac * (self.cosmo.arcsec2phys_lens(1.) * const.Mpc / 1000)**2
 
     def _beta_ani(self, r, r_ani):
         """
