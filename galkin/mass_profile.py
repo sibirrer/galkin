@@ -1,7 +1,31 @@
 import math
 import numpy as np
+from lenstronomy.ImSim.lens_model import LensModel
+
 
 class MassProfile(object):
+    """
+    mass profile class
+    """
+    def __init__(self, profile_list):
+        """
+
+        :param profile_list:
+        """
+        kwargs_options = {'lens_model_list': profile_list}
+        self.model = LensModel(kwargs_options)
+
+    def mass_3d(self, r, kwargs):
+        """
+
+        :param r:
+        :param kwargs:
+        :return:
+        """
+        return self.model.mass_3d(r, kwargs)
+
+
+class MassProfile_old(object):
     """
     class to deal with arbitrary mass profiles
     """

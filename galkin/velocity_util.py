@@ -38,3 +38,15 @@ def R_r(r):
     y = r * np.sin(theta) * np.sin(phi)
     R = np.sqrt(x**2 + y**2)
     return R, x, y
+
+
+def draw_xy(R):
+    """
+
+    :param R: projected radius
+    :return:
+    """
+    phi = np.random.uniform(0, 2 * np.pi)
+    x = R * np.cos(phi)
+    y = R * np.sin(phi)
+    return x, y

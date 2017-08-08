@@ -3,7 +3,7 @@ __author__ = 'sibirrer'
 import scipy.ndimage as ndimage
 import numpy as np
 
-from galkin.LOS_dispersion import Velocity_dispersion_numerical_integral
+from galkin_old.LOS_dispersion import Velocity_dispersion_numerical_integral
 
 class Apperature(object):
     """

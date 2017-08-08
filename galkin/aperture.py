@@ -65,7 +65,7 @@ class Aperture(object):
         x = ra - center_ra
         y = dec - center_dec
         R = np.sqrt(x**2 + y**2)
-        if R >= r_in and R < r_out:
+        if (R >= r_in) and (R < r_out):
             return True
         else:
             return False

@@ -3,7 +3,7 @@ Tests for `galkin` module.
 """
 import pytest
 import numpy.testing as npt
-from galkin.galkin import GalKin
+from galkin.galkin_old import GalKin_old
 from galkin.LOS_dispersion import Velocity_dispersion
 
 
@@ -50,13 +50,13 @@ class TestGalkin(object):
 
         psf_fwhm = 0.7  # Gaussian FWHM psf
         kwargs_cosmo = {'D_d': 1000, 'D_s': 1500, 'D_ds': 800}
-        galkin = GalKin(aperture=aperture_type, mass_profile=mass_profile, light_profile=light_profile,
-                        anisotropy_type=anisotropy_type, psf_fwhm=psf_fwhm, kwargs_cosmo=kwargs_cosmo)
-        sigma_v = galkin.vel_disp(kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=100)
+        galkin = GalKin_old(aperture=aperture_type, mass_profile=mass_profile, light_profile=light_profile,
+                            anisotropy_type=anisotropy_type, psf_fwhm=psf_fwhm, kwargs_cosmo=kwargs_cosmo)
+        sigma_v = galkin.vel_disp(kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=1000)
 
         los_disp = Velocity_dispersion(beta_const=False, b_prior=False, kwargs_cosmo=kwargs_cosmo)
         sigma_v2 = los_disp.vel_disp(gamma, theta_E, r_eff, aniso_param=r_ani, R_slit=length/2., dR_slit=width/2.,
-                                     FWHM=psf_fwhm, num=100)
+                                     FWHM=psf_fwhm, num=1000)
         npt.assert_almost_equal((sigma_v-sigma_v2)/sigma_v2, 0, decimal=1)
 
 if __name__ == '__main__':

@@ -1,32 +1,24 @@
+from light_profile import LightProfile
+from mass_profile import MassProfile
+from aperture import Aperture
+from anisotropy import MamonLokasAnisotropy
+import velocity_util as util
+
 import numpy as np
 
-import velocity_util as util
-from light_profile import LightProfile
-from aperture import Aperture
-from anisotropy import Anisotorpy
-from jeans_equation import Jeans_solver
 
-
-class GalKin(object):
+class Galkin(object):
     """
-    master class for all computations
+    major class to compute velocity dispersion measurements given light and mass models
     """
-    def __init__(self, aperture='slit', mass_profile='power_law', light_profile='Hernquist', anisotropy_type='r_ani', psf_fwhm=0.7, kwargs_cosmo={'D_d': 1000, 'D_s': 2000, 'D_ds': 500}):
-        """
-        initializes the observation condition and masks
-        :param aperture_type: string
-        :param psf_fwhm: float
-        """
-        self._mass_profile = mass_profile
-        self._fwhm = psf_fwhm
-        self._kwargs_cosmo = kwargs_cosmo
-        self.lightProfile = LightProfile(light_profile)
-        self.aperture = Aperture(aperture)
-        self.anisotropy = Anisotorpy(anisotropy_type)
-        self.FWHM = psf_fwhm
-        self.jeans_solver = Jeans_solver(kwargs_cosmo, mass_profile, light_profile, anisotropy_type)
+    def __init__(self, mass_profile_list, light_profile_list, aperture_type='slit', anisotropy_model='isotropic', fwhm=0.7):
+        self.massProfile = MassProfile(mass_profile_list)
+        self.lightProfile = LightProfile(light_profile_list)
+        self.aperture = Aperture(aperture_type)
+        self.anisotropy = MamonLokasAnisotropy(anisotropy_model)
+        self.FWHM = fwhm
 
-    def vel_disp(self, kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=100):
+    def vel_disp(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, num=100):
         """
         computes the averaged LOS velocity dispersion in the slit (convolved)
         :param gamma:
@@ -39,52 +31,70 @@ class GalKin(object):
         """
         sigma_s2_sum = 0
         for i in range(0, num):
-            sigma_s2_draw = self._vel_disp_one(kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy)
+            sigma_s2_draw = self.draw_one_sigma2(kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur)
             sigma_s2_sum += sigma_s2_draw
         sigma_s2_average = sigma_s2_sum/num
         return np.sqrt(sigma_s2_average)
 
-    def _vel_disp_one(self, kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy):
-        """
-        computes one realisation of the velocity dispersion realized in the slit
-        :param gamma:
-        :param rho0_r0_gamma:
-        :param r_eff:
-        :param r_ani:
-        :param R_slit:
-        :param dR_slit:
-        :param FWHM:
-        :return:
+    def draw_one_sigma2(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_aperture):
         """
 
+        :param kwargs_mass:
+        :param kwargs_light:
+        :param kwargs_anisotropy:
+        :param kwargs_aperture:
+        :return:
+        """
         while True:
-            r = self.lightProfile.draw_light(kwargs_light)  # draw r
-            R, x, y = util.R_r(r)  # draw projected R
+            R = self.lightProfile.draw_light_2d(kwargs_light)  # draw r
+            x, y = util.draw_xy(R)  # draw projected R
             x_, y_ = util.displace_PSF(x, y, self.FWHM)  # displace via PSF
             bool = self.aperture.aperture_select(x_, y_, kwargs_aperture)
             if bool is True:
                 break
-        sigma_s2 = self.sigma_s2(r, R, kwargs_profile, kwargs_anisotropy, kwargs_light)
-        return sigma_s2
+        sigma2_R = self.sigma2_R(R, kwargs_mass, kwargs_light, kwargs_anisotropy)
+        return sigma2_R
 
-    def sigma_s2(self, r, R, kwargs_profile, kwargs_anisotropy, kwargs_light):
+    def sigma2_R(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy):
         """
-        projected velocity dispersion
-        :param r:
+        returns unweighted los velocity dispersion
         :param R:
-        :param r_ani:
-        :param a:
-        :param gamma:
-        :param phi_E:
+        :param kwargs_mass:
+        :param kwargs_light:
+        :param kwargs_anisotropy:
         :return:
         """
-        beta = self.anisotropy.beta_r(r, kwargs_anisotropy)
-        return (1 - beta * R**2/r**2) * self.sigma_r2(r, kwargs_profile, kwargs_anisotropy, kwargs_light)
+        I_R_sigma2 = self.I_R_simga2(R, kwargs_mass, kwargs_light, kwargs_anisotropy)
+        I_R = self.lightProfile.light_2d(R, kwargs_light)
+        return I_R_sigma2 / I_R
 
-    def sigma_r2(self, r, kwargs_profile, kwargs_anisotropy, kwargs_light):
+    def I_R_simga2(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=100):
         """
-        computes radial velocity dispersion at radius r (solving the Jeans equation
-        :param r:
+        equation A15 in Mamon&Lokas 2005 as a logarithmic numerical integral
+        modulo pre-factor 2*G
+        :param R:
+        :param kwargs_mass:
+        :param kwargs_light:
+        :param kwargs_anisotropy:
         :return:
         """
-        return self.jeans_solver.sigma_r2(r, kwargs_profile, kwargs_anisotropy, kwargs_light)
+        IR_sigma2 = 0
+        lnr_array = np.linspace(-4, 1.5, num)
+        d_lnr = lnr_array[1] - lnr_array[0]
+        for lnr in lnr_array:
+            IR_sigma2 += self._integrand_A15(10**lnr, R, kwargs_mass, kwargs_light, kwargs_anisotropy) * d_lnr
+        return IR_sigma2
+
+    def _integrand_A15(self, r, R, kwargs_mass, kwargs_light, kwargs_anisotropy):
+        """
+        integrand of A15 (in log space)
+        :param r:
+        :param kwargs_mass:
+        :param kwargs_light:
+        :param kwargs_anisotropy:
+        :return:
+        """
+        k_r = self.anisotropy.K(r, R, kwargs_anisotropy)
+        l_r = self.lightProfile.light_3d(r, kwargs_light)
+        m_r = self.massProfile.mass_3d(r, kwargs_mass)
+        return k_r * l_r * m_r

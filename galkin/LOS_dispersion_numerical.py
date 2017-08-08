@@ -1,5 +1,5 @@
 import numpy as np
-import galkin.velocity_util as vel_util
+import galkin_old.velocity_util as vel_util
 import astrofunc.constants as const
 
 
