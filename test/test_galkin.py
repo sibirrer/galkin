@@ -3,7 +3,11 @@ Tests for `galkin` module.
 """
 import pytest
 import numpy.testing as npt
+import numpy as np
+import scipy.integrate as integrate
 from galkin.galkin_old import GalKin_old
+from galkin.galkin import Galkin
+from galkin.light_profile import LightProfile
 from galkin.LOS_dispersion import Velocity_dispersion
 
 
@@ -28,7 +32,7 @@ class TestGalkin(object):
         # mass profile
         mass_profile = 'power_law'
         theta_E = 1.2
-        gamma = 2.2
+        gamma = 2.
         kwargs_profile = {'theta_E': theta_E, 'gamma': gamma}  # Einstein radius (arcsec) and power-law slope
 
         # anisotropy profile
@@ -52,12 +56,67 @@ class TestGalkin(object):
         kwargs_cosmo = {'D_d': 1000, 'D_s': 1500, 'D_ds': 800}
         galkin = GalKin_old(aperture=aperture_type, mass_profile=mass_profile, light_profile=light_profile,
                             anisotropy_type=anisotropy_type, psf_fwhm=psf_fwhm, kwargs_cosmo=kwargs_cosmo)
-        sigma_v = galkin.vel_disp(kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=1000)
+        sigma_v = galkin.vel_disp(kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=100)
+
+        los_disp = Velocity_dispersion(beta_const=False, b_prior=False, kwargs_cosmo=kwargs_cosmo)
+        sigma_v2 = los_disp.vel_disp(gamma, theta_E, r_eff, aniso_param=r_ani, R_slit=length/2., dR_slit=width/2.,
+                                     FWHM=psf_fwhm, num=100)
+        npt.assert_almost_equal((sigma_v-sigma_v2)/sigma_v2, 0, decimal=1)
+
+    def test_compare_power_law(self):
+        """
+        compare power-law profiles analytical vs. numerical
+        :return:
+        """
+        # light profile
+        light_profile_list = ['HERNQUIST']
+        r_eff = 1.8
+        kwargs_light = [{'Rs':  r_eff, 'sigma0': 1.}]  # effective half light radius (2d projected) in arcsec
+        # 0.551 *
+        # mass profile
+        mass_profile_list = ['SPP']
+        theta_E = 1.2
+        gamma = 2.
+        kwargs_profile = [{'theta_E': theta_E, 'gamma': gamma}]  # Einstein radius (arcsec) and power-law slope
+
+        # anisotropy profile
+        anisotropy_type = 'OsipkovMerritt'
+        r_ani = 2.
+        kwargs_anisotropy = {'r_ani': r_ani}  # anisotropy radius [arcsec]
+
+        # aperture as slit
+        aperture_type = 'slit'
+        length = 3.8
+        width = 0.9
+        kwargs_aperture = {'length': length, 'width': width, 'center_ra': 0, 'center_dec': 0, 'angle': 0}
+
+        psf_fwhm = 0.01  # Gaussian FWHM psf
+        kwargs_cosmo = {'D_d': 1000, 'D_s': 1500, 'D_ds': 800}
+        galkin = Galkin(mass_profile_list, light_profile_list, aperture_type=aperture_type, anisotropy_model=anisotropy_type, fwhm=psf_fwhm, kwargs_cosmo=kwargs_cosmo)
+        sigma_v = galkin.vel_disp(kwargs_profile, kwargs_light, kwargs_anisotropy, kwargs_aperture, num=1000)
 
         los_disp = Velocity_dispersion(beta_const=False, b_prior=False, kwargs_cosmo=kwargs_cosmo)
         sigma_v2 = los_disp.vel_disp(gamma, theta_E, r_eff, aniso_param=r_ani, R_slit=length/2., dR_slit=width/2.,
                                      FWHM=psf_fwhm, num=1000)
+        print sigma_v, sigma_v2, 'sigma_v Galkin, sigma_v los dispersion'
+        print (sigma_v/sigma_v2)**2
+
         npt.assert_almost_equal((sigma_v-sigma_v2)/sigma_v2, 0, decimal=1)
+
+    def test_projected_light_integral(self):
+        """
+
+        :return:
+        """
+        light_profile_list = ['HERNQUIST']
+        r_eff = 1.
+        kwargs_light = [{'Rs': r_eff, 'sigma0': 1.}]  # effective half light radius (2d projected) in arcsec
+        lightProfile = LightProfile(light_profile_list)
+        R = 2
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 10)
+        npt.assert_almost_equal(light2d, out[0]*2, decimal=3)
+
 
 if __name__ == '__main__':
     pytest.main()

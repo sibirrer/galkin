@@ -1,28 +1,33 @@
 import math
 import numpy as np
 from lenstronomy.ImSim.lens_model import LensModel
-
+import astrofunc.constants as const
+from cosmo import Cosmo
 
 class MassProfile(object):
     """
     mass profile class
     """
-    def __init__(self, profile_list):
+    def __init__(self, profile_list, kwargs_cosmo={'D_d': 1000, 'D_s': 2000, 'D_ds': 500}):
         """
 
         :param profile_list:
         """
         kwargs_options = {'lens_model_list': profile_list}
         self.model = LensModel(kwargs_options)
+        self.cosmo = Cosmo(kwargs_cosmo)
 
     def mass_3d(self, r, kwargs):
         """
 
-        :param r:
-        :param kwargs:
-        :return:
+        :param r: in arc seconds
+        :param kwargs: lens model parameters in arc seconds
+        :return: mass enclosed physical radius in kg
         """
-        return self.model.mass_3d(r, kwargs)
+        mass_dim_less = self.model.mass_3d(r, kwargs)
+        mass_dim = mass_dim_less * const.arcsec**3 * self.cosmo.D_d**2 * self.cosmo.D_s\
+               / self.cosmo.D_ds * const.Mpc * const.c**2 / (4*np.pi*const.G )
+        return mass_dim
 
 
 class MassProfile_old(object):
