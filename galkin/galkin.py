@@ -87,8 +87,8 @@ class Galkin(object):
         IR_sigma2 = 0
         dr_array = np.linspace(R+0.000001, 20, num)
         dr = dr_array[1] - dr_array[0]
-        for r in dr_array:
-            IR_sigma2 += self._integrand_A15(r, R, kwargs_mass, kwargs_light, kwargs_anisotropy) * dr
+        IR_sigma2_dr = self._integrand_A15(dr_array, R, kwargs_mass, kwargs_light, kwargs_anisotropy) * dr
+        IR_sigma2 = np.sum(IR_sigma2_dr)
         return IR_sigma2
 
     def _integrand_A15(self, r, R, kwargs_mass, kwargs_light, kwargs_anisotropy):
@@ -101,6 +101,6 @@ class Galkin(object):
         :return:
         """
         k_r = self.anisotropy.K(r, R, kwargs_anisotropy)
-        l_r = self.lightProfile.light_3d(r, kwargs_light)
-        m_r = self.massProfile.mass_3d(r, kwargs_mass)
+        l_r = self.lightProfile.light_3d_interp(r, kwargs_light)
+        m_r = self.massProfile.mass_3d_interp(r, kwargs_mass)
         return k_r * l_r * m_r / r

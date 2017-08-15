@@ -21,7 +21,21 @@ class LightProfile(object):
         :param kwargs_list:
         :return:
         """
-        return self.light_model.light_3d(r, kwargs_list)
+        light_3d = self.light_model.light_3d(r, kwargs_list)
+        return light_3d
+
+    def light_3d_interp(self, r, kwargs_list, new_compute=False):
+        """
+
+        :param kwargs_list:
+        :return:
+        """
+        if not hasattr(self, '_log_light_3d') or new_compute is True:
+            r_array = np.linspace(0.0001, 20, 200)
+            light_3d_array = self.light_model.light_3d(r_array, kwargs_list)
+            f = interp1d(np.log(r_array), np.log(light_3d_array), fill_value="extrapolate")
+            self._f_light_3d = f
+        return np.exp(self._f_light_3d(np.log(r)))
 
     def light_2d(self, R, kwargs_list):
         """
@@ -39,7 +53,7 @@ class LightProfile(object):
         :return:
         """
         if not hasattr(self, '_light_cdf') or new_compute is True:
-            r_array = np.linspace(0,10, 500)
+            r_array = np.linspace(0, 10, 100)
             cum_sum = np.zeros_like(r_array)
             sum = 0
             for i, r in enumerate(r_array):

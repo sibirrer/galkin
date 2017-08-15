@@ -90,7 +90,7 @@ class TestGalkin(object):
         width = 0.9
         kwargs_aperture = {'length': length, 'width': width, 'center_ra': 0, 'center_dec': 0, 'angle': 0}
 
-        psf_fwhm = 0.01  # Gaussian FWHM psf
+        psf_fwhm = 0.7  # Gaussian FWHM psf
         kwargs_cosmo = {'D_d': 1000, 'D_s': 1500, 'D_ds': 800}
         galkin = Galkin(mass_profile_list, light_profile_list, aperture_type=aperture_type, anisotropy_model=anisotropy_type, fwhm=psf_fwhm, kwargs_cosmo=kwargs_cosmo)
         sigma_v = galkin.vel_disp(kwargs_profile, kwargs_light, kwargs_anisotropy, kwargs_aperture, num=1000)
