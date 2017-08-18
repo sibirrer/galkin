@@ -72,6 +72,7 @@ class Galkin(object):
         """
         I_R_sigma2 = self.I_R_simga2(R, kwargs_mass, kwargs_light, kwargs_anisotropy)
         I_R = self.lightProfile.light_2d(R, kwargs_light)
+        #I_R = self.lightProfile._integrand_light(R, kwargs_light)
         return I_R_sigma2 / I_R
 
     def I_R_simga2(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=100):
@@ -84,7 +85,6 @@ class Galkin(object):
         :param kwargs_anisotropy:
         :return:
         """
-        IR_sigma2 = 0
         dr_array = np.linspace(R+0.000001, 20, num)
         dr = dr_array[1] - dr_array[0]
         IR_sigma2_dr = self._integrand_A15(dr_array, R, kwargs_mass, kwargs_light, kwargs_anisotropy) * dr

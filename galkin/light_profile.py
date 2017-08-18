@@ -31,8 +31,9 @@ class LightProfile(object):
         :return:
         """
         if not hasattr(self, '_log_light_3d') or new_compute is True:
-            r_array = np.linspace(0.0001, 20, 200)
+            r_array = np.linspace(0.0001, 20, 1000)
             light_3d_array = self.light_model.light_3d(r_array, kwargs_list)
+            light_3d_array[light_3d_array < 10**(-10)] = 10**(-10)
             f = interp1d(np.log(r_array), np.log(light_3d_array), fill_value="extrapolate")
             self._f_light_3d = f
         return np.exp(self._f_light_3d(np.log(r)))
@@ -44,7 +45,26 @@ class LightProfile(object):
         :param kwargs_list:
         :return:
         """
-        return self.light_model.surface_brightness(R, 0, kwargs_list)
+        kwargs_list_copy = copy.deepcopy(kwargs_list)
+        kwargs_list_new = []
+        for kwargs in kwargs_list_copy:
+            if 'q' in kwargs:
+                kwargs['q'] = 1.
+            kwargs_list_new.append({k: v for k, v in kwargs.items() if not k in ['center_x', 'center_y']})
+        return self.light_model.surface_brightness(R, 0, kwargs_list_new)
+
+    def _integrand_light(self, R, kwargs_light):
+        """
+
+        :param r:
+        :param R:
+        :param kwargs_light:
+        :return:
+        """
+        r_array = np.linspace(0.0001, 20, 1000)
+        dr = r_array[1] - r_array[0]
+        r_ = np.sqrt(r_array**2 + R**2)
+        return np.sum(self.light_3d_interp(r_, kwargs_light)) * 2 * dr
 
     def draw_light_2d(self, kwargs_list, n=1, new_compute=False):
         """

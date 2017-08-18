@@ -103,7 +103,21 @@ class TestGalkin(object):
 
         npt.assert_almost_equal((sigma_v-sigma_v2)/sigma_v2, 0, decimal=1)
 
-    def test_projected_light_integral(self):
+    def test_numeric_light_integral(self):
+        """
+
+        :return:
+        """
+        light_profile_list = ['HERNQUIST']
+        r_eff = .05
+        kwargs_light = [{'Rs': r_eff, 'sigma0': 1.}]  # effective half light radius (2d projected) in arcsec
+        lightProfile = LightProfile(light_profile_list)
+        R = 2
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        light2d_int = lightProfile._integrand_light(R, kwargs_light)
+        npt.assert_almost_equal(light2d/light2d_int, 1, decimal=2)
+
+    def test_projected_light_integral_hernquist(self):
         """
 
         :return:
@@ -116,6 +130,76 @@ class TestGalkin(object):
         light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
         out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 10)
         npt.assert_almost_equal(light2d, out[0]*2, decimal=3)
+
+    def test_projected_light_integral_hernquist_ellipse(self):
+        """
+
+        :return:
+        """
+        light_profile_list = ['HERNQUIST_ELLIPSE']
+        r_eff = 1.
+        kwargs_light = [{'Rs': r_eff, 'sigma0': 1., 'q': 0.8, 'phi_G': 1.}]  # effective half light radius (2d projected) in arcsec
+        lightProfile = LightProfile(light_profile_list)
+        R = 2
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 10)
+        npt.assert_almost_equal(light2d, out[0]*2, decimal=3)
+
+    def test_projected_light_integral_pjaffe(self):
+        """
+
+        :return:
+        """
+        light_profile_list = ['PJAFFE']
+        kwargs_light = [{'Rs': .5, 'Ra': 0.01, 'sigma0': 1.}]  # effective half light radius (2d projected) in arcsec
+        lightProfile = LightProfile(light_profile_list)
+        R = 0.01
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 100)
+        print out, 'out'
+        npt.assert_almost_equal(light2d/(out[0]*2), 1., decimal=3)
+
+    def test_realistic_0(self):
+        """
+        realistic test example
+        :return:
+        """
+        light_profile_list = ['HERNQUIST']
+        kwargs_light = [{'Rs': 0.10535462602138289, 'center_x': -0.02678473951679429, 'center_y': 0.88691126347462712, 'sigma0': 3.7114695634960109}]
+        lightProfile = LightProfile(light_profile_list)
+        R = 0.01
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 100)
+        print out, 'out'
+        npt.assert_almost_equal(light2d/(out[0]*2), 1., decimal=3)
+
+    def test_realistic_1(self):
+        """
+        realistic test example
+        :return:
+        """
+        light_profile_list = ['HERNQUIST_ELLIPSE']
+        kwargs_light = [{'Rs': 0.10535462602138289, 'q': 0.46728323131925864, 'center_x': -0.02678473951679429, 'center_y': 0.88691126347462712, 'phi_G': 0.74260706384506325, 'sigma0': 3.7114695634960109}]
+        lightProfile = LightProfile(light_profile_list)
+        R = 0.01
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 100)
+        print out, 'out'
+        npt.assert_almost_equal(light2d/(out[0]*2), 1., decimal=3)
+
+    def test_realistic(self):
+        """
+        realistic test example
+        :return:
+        """
+        light_profile_list = ['HERNQUIST_ELLIPSE', 'PJAFFE_ELLIPSE']
+        kwargs_light = [{'Rs': 0.10535462602138289, 'q': 0.46728323131925864, 'center_x': -0.02678473951679429, 'center_y': 0.88691126347462712, 'phi_G': 0.74260706384506325, 'sigma0': 3.7114695634960109}, {'Rs': 0.44955054610388684, 'q': 0.66582356813012267, 'center_x': 0.019536801118136753, 'center_y': 0.0218888643537157, 'Ra': 0.0010000053334891974, 'phi_G': -0.33379268413794494, 'sigma0': 967.00280526319796}]
+        lightProfile = LightProfile(light_profile_list)
+        R = 0.01
+        light2d = lightProfile.light_2d(R=R, kwargs_list=kwargs_light)
+        out = integrate.quad(lambda x: lightProfile.light_3d(np.sqrt(R**2+x**2), kwargs_light), 0, 100)
+        print out, 'out'
+        npt.assert_almost_equal(light2d/(out[0]*2), 1., decimal=3)
 
 
 if __name__ == '__main__':

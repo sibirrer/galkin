@@ -26,7 +26,7 @@ class MassProfile(object):
         :return: mass enclosed physical radius in kg
         """
         if not hasattr(self, '_log_mass_3d') or new_compute is True:
-            r_array = np.linspace(0.0001, 20, 200)
+            r_array = np.linspace(0.0001, 20, 1000)
             mass_3d_array = self.model.mass_3d(r_array, kwargs)
             mass_dim_array = mass_3d_array * const.arcsec ** 3 * self.cosmo.D_d ** 2 * self.cosmo.D_s \
                        / self.cosmo.D_ds * const.Mpc * const.c ** 2 / (4 * np.pi * const.G)
