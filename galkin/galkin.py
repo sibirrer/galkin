@@ -22,7 +22,7 @@ class Galkin(object):
         self.FWHM = fwhm
         self.cosmo = Cosmo(kwargs_cosmo)
 
-    def vel_disp(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, num=100):
+    def vel_disp(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, num=100, r_eff=1., grid_num=100):
         """
         computes the averaged LOS velocity dispersion in the slit (convolved)
         :param gamma:
@@ -35,14 +35,14 @@ class Galkin(object):
         """
         sigma2_R_sum = 0
         for i in range(0, num):
-            sigma2_R = self.draw_one_sigma2(kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur)
+            sigma2_R = self.draw_one_sigma2(kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, r_eff=r_eff, num=grid_num)
             sigma2_R_sum += sigma2_R
         sigma_s2_average = sigma2_R_sum / num
         # apply unit conversion from arc seconds and deflections to physical velocity disperison in (km/s)
         sigma_s2_average *= 2 * const.G  # correcting for integral prefactor
         return np.sqrt(sigma_s2_average/(const.arcsec**2 * self.cosmo.D_d**2 * const.Mpc))/1000.  # in units of km/s
 
-    def draw_one_sigma2(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_aperture):
+    def draw_one_sigma2(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_aperture, r_eff=1., num=100):
         """
 
         :param kwargs_mass:
@@ -52,16 +52,16 @@ class Galkin(object):
         :return:
         """
         while True:
-            R = self.lightProfile.draw_light_2d(kwargs_light)  # draw r
+            R = self.lightProfile.draw_light_2d(kwargs_light, r_eff=r_eff)  # draw r
             x, y = util.draw_xy(R)  # draw projected R
             x_, y_ = util.displace_PSF(x, y, self.FWHM)  # displace via PSF
             bool = self.aperture.aperture_select(x_, y_, kwargs_aperture)
             if bool is True:
                 break
-        sigma2_R = self.sigma2_R(R, kwargs_mass, kwargs_light, kwargs_anisotropy)
+        sigma2_R = self.sigma2_R(R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=num)
         return sigma2_R
 
-    def sigma2_R(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy):
+    def sigma2_R(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=100):
         """
         returns unweighted los velocity dispersion
         :param R:
@@ -70,7 +70,7 @@ class Galkin(object):
         :param kwargs_anisotropy:
         :return:
         """
-        I_R_sigma2 = self.I_R_simga2(R, kwargs_mass, kwargs_light, kwargs_anisotropy)
+        I_R_sigma2 = self.I_R_simga2(R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=num)
         I_R = self.lightProfile.light_2d(R, kwargs_light)
         #I_R = self.lightProfile._integrand_light(R, kwargs_light)
         return I_R_sigma2 / I_R

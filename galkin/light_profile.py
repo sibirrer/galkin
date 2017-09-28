@@ -66,14 +66,14 @@ class LightProfile(object):
         r_ = np.sqrt(r_array**2 + R**2)
         return np.sum(self.light_3d_interp(r_, kwargs_light)) * 2 * dr
 
-    def draw_light_2d(self, kwargs_list, n=1, new_compute=False):
+    def draw_light_2d(self, kwargs_list, n=1, new_compute=False, r_eff=1.):
         """
         constructs the CDF and draws from it random realizations of projected radii R
         :param kwargs_list:
         :return:
         """
         if not hasattr(self, '_light_cdf') or new_compute is True:
-            r_array = np.linspace(0, 10, 100)
+            r_array = np.linspace(0.000001, 10*r_eff, 1000)
             cum_sum = np.zeros_like(r_array)
             sum = 0
             for i, r in enumerate(r_array):
@@ -82,7 +82,7 @@ class LightProfile(object):
             cum_sum_norm = cum_sum/cum_sum[-1]
             f = interp1d(cum_sum_norm, r_array)
             self._light_cdf = f
-        cdf_draw = np.random.uniform(0, 1, n)
+        cdf_draw = np.random.uniform(0.000001, 1, n)
         r_draw = self._light_cdf(cdf_draw)
         return r_draw
 
