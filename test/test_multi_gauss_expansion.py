@@ -143,7 +143,7 @@ class TestGalkin(object):
 
         # mge of light profile
         lightModel = LightModel(light_profile_list)
-        r_array = np.logspace(-2, 2, 100)
+        r_array = np.logspace(-2, 2, 100) * r_eff * 2
         flux_r = lightModel.surface_brightness(r_array, 0, kwargs_light)
         amps, sigmas, norm = mge.mge_1d(r_array, flux_r, N=20)
         light_profile_list_mge = ['MULTI_GAUSSIAN']
@@ -192,7 +192,7 @@ class TestGalkin(object):
 
         # light profile
         light_profile_list = ['SERSIC']
-        r_sersic = 1.5
+        r_sersic = 1.3
         n_sersic = 3.
         kwargs_light = [{'I0_sersic': 1., 'R_sersic':  r_sersic, 'n_sersic': n_sersic}]  # effective half light radius (2d projected) in arcsec
 
@@ -202,20 +202,22 @@ class TestGalkin(object):
         gamma = 2.
         kwargs_profile = [{'theta_E': theta_E, 'gamma': gamma}]  # Einstein radius (arcsec) and power-law slope
 
-        # mge of light profile
-        lightModel = LightModel(light_profile_list)
-        r_array = np.logspace(-2, 2, 100)
-        flux_r = lightModel.surface_brightness(r_array, 0, kwargs_light)
-        amps, sigmas, norm = mge.mge_1d(r_array, flux_r, N=20)
-        light_profile_list_mge = ['MULTI_GAUSSIAN']
-        kwargs_light_mge = [{'amp': amps, 'sigma': sigmas}]
-
         # Hernquist fit to Sersic profile
         lens_analysis = LensAnalysis({'lens_light_model_list': ['SERSIC'], 'lens_model_list': ['NONE']}, {})
         r_eff = lens_analysis.half_light_radius(kwargs_light)
         print(r_eff)
         light_profile_list_hernquist = ['HERNQUIST']
         kwargs_light_hernquist = [{'Rs': r_eff*0.551, 'sigma0': 1.}]
+
+        # mge of light profile
+        lightModel = LightModel(light_profile_list)
+        r_array = np.logspace(-2, 2, 100) * r_eff * 2
+        print(r_sersic/r_eff, 'r_sersic/r_eff')
+        flux_r = lightModel.surface_brightness(r_array, 0, kwargs_light)
+        amps, sigmas, norm = mge.mge_1d(r_array, flux_r, N=20)
+        light_profile_list_mge = ['MULTI_GAUSSIAN']
+        kwargs_light_mge = [{'amp': amps, 'sigma': sigmas}]
+
 
         galkin = Galkin(mass_profile_list, light_profile_list_hernquist, aperture_type=aperture_type, anisotropy_model=anisotropy_type, fwhm=psf_fwhm, kwargs_cosmo=kwargs_cosmo)
         sigma_v = galkin.vel_disp(kwargs_profile, kwargs_light_hernquist, kwargs_anisotropy, kwargs_aperture, num=1000)
