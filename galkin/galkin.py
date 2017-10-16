@@ -22,7 +22,7 @@ class Galkin(object):
         self.FWHM = fwhm
         self.cosmo = Cosmo(kwargs_cosmo)
 
-    def vel_disp(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, num=100, r_eff=1., grid_num=100):
+    def vel_disp(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, num=1000, r_eff=1., grid_num=100, log_int=False):
         """
         computes the averaged LOS velocity dispersion in the slit (convolved)
         :param gamma:
@@ -35,14 +35,14 @@ class Galkin(object):
         """
         sigma2_R_sum = 0
         for i in range(0, num):
-            sigma2_R = self.draw_one_sigma2(kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, r_eff=r_eff, num=grid_num)
+            sigma2_R = self.draw_one_sigma2(kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_apertur, r_eff=r_eff, num=grid_num, log_int=log_int)
             sigma2_R_sum += sigma2_R
         sigma_s2_average = sigma2_R_sum / num
         # apply unit conversion from arc seconds and deflections to physical velocity disperison in (km/s)
         sigma_s2_average *= 2 * const.G  # correcting for integral prefactor
         return np.sqrt(sigma_s2_average/(const.arcsec**2 * self.cosmo.D_d**2 * const.Mpc))/1000.  # in units of km/s
 
-    def draw_one_sigma2(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_aperture, r_eff=1., num=100):
+    def draw_one_sigma2(self, kwargs_mass, kwargs_light, kwargs_anisotropy, kwargs_aperture, r_eff=1., num=1000, log_int=False):
         """
 
         :param kwargs_mass:
@@ -58,10 +58,10 @@ class Galkin(object):
             bool = self.aperture.aperture_select(x_, y_, kwargs_aperture)
             if bool is True:
                 break
-        sigma2_R = self.sigma2_R(R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=num)
+        sigma2_R = self.sigma2_R(R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=num, log_int=log_int)
         return sigma2_R
 
-    def sigma2_R(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=100):
+    def sigma2_R(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=1000, log_int=False):
         """
         returns unweighted los velocity dispersion
         :param R:
@@ -70,12 +70,12 @@ class Galkin(object):
         :param kwargs_anisotropy:
         :return:
         """
-        I_R_sigma2 = self.I_R_simga2(R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=num)
+        I_R_sigma2 = self.I_R_simga2(R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=num, log_int=log_int)
         I_R = self.lightProfile.light_2d(R, kwargs_light)
         #I_R = self.lightProfile._integrand_light(R, kwargs_light)
         return I_R_sigma2 / I_R
 
-    def I_R_simga2(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=100):
+    def I_R_simga2(self, R, kwargs_mass, kwargs_light, kwargs_anisotropy, num=1000, log_int=False):
         """
         equation A15 in Mamon&Lokas 2005 as a logarithmic numerical integral
         modulo pre-factor 2*G
@@ -85,13 +85,20 @@ class Galkin(object):
         :param kwargs_anisotropy:
         :return:
         """
-        dr_array = np.linspace(R+0.000001, 20, num)
-        dr = dr_array[1] - dr_array[0]
-        IR_sigma2_dr = self._integrand_A15(dr_array, R, kwargs_mass, kwargs_light, kwargs_anisotropy) * dr
+        if log_int is True:
+            min_log = np.log10(R+0.00001)
+            max_log = np.log10(20)
+            r_array = np.logspace(min_log, max_log, num)
+            dlog_r = (np.log10(r_array[1]) - np.log10(r_array[0]))
+            IR_sigma2_dr = self._integrand_A15(r_array, R, kwargs_mass, kwargs_light, kwargs_anisotropy, log_int) * dlog_r * r_array
+        else:
+            r_array = np.linspace(R+0.000001, 20, num)
+            dr = r_array[1] - r_array[0]
+            IR_sigma2_dr = self._integrand_A15(r_array, R, kwargs_mass, kwargs_light, kwargs_anisotropy) * dr
         IR_sigma2 = np.sum(IR_sigma2_dr)
         return IR_sigma2
 
-    def _integrand_A15(self, r, R, kwargs_mass, kwargs_light, kwargs_anisotropy):
+    def _integrand_A15(self, r, R, kwargs_mass, kwargs_light, kwargs_anisotropy, log_int=False):
         """
         integrand of A15 (in log space)
         :param r:
@@ -103,4 +110,8 @@ class Galkin(object):
         k_r = self.anisotropy.K(r, R, kwargs_anisotropy)
         l_r = self.lightProfile.light_3d_interp(r, kwargs_light)
         m_r = self.massProfile.mass_3d_interp(r, kwargs_mass)
-        return k_r * l_r * m_r / r
+        if log_int:
+            out = k_r * l_r * m_r
+        else:
+            out = k_r * l_r * m_r / r
+        return out
