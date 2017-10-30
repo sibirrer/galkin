@@ -26,7 +26,7 @@ class GalKin_old(object):
         self.FWHM = psf_fwhm
         self.jeans_solver = Jeans_solver(kwargs_cosmo, mass_profile, light_profile, anisotropy_type)
 
-    def vel_disp(self, kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=100):
+    def vel_disp(self, kwargs_profile, kwargs_aperture, kwargs_light, kwargs_anisotropy, num=1000):
         """
         computes the averaged LOS velocity dispersion in the slit (convolved)
         :param gamma:
