@@ -13,10 +13,10 @@ class LightProfile(object):
 
         :param profile_list:
         """
-        self.light_model = LightModel(profile_type_list=profile_list)
+        self.light_model = LightModel(profile_type_list=profile_list, smoothing=0.001)
         self._interp_grid_num = kwargs_numerics.get('interpol_grid_num', 1000)
         self._max_interpolate = kwargs_numerics.get('max_interpolate', 100)
-        self._min_interpolate = kwargs_numerics.get('min_interpolate', 0.0001)
+        self._min_interpolate = kwargs_numerics.get('min_interpolate', 0.0002)
 
     def light_3d(self, r, kwargs_list):
         """

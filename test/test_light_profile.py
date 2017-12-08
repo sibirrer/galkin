@@ -70,7 +70,7 @@ class TestLightProfile(object):
 
     def test_light_3d(self):
         lightProfile = LightProfile(profile_list=['HERNQUIST'])
-        r = np.logspace(-2,2, 100)
+        r = np.logspace(-2, 2, 100)
         kwargs_profile = [{'sigma0': 1., 'Rs': 0.5}]
         light_3d = lightProfile.light_3d_interp(r, kwargs_profile)
         light_3d_exact = lightProfile.light_3d(r, kwargs_profile)
