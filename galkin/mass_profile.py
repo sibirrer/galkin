@@ -15,7 +15,7 @@ class MassProfile(object):
         :param profile_list:
         """
         kwargs_options = {'lens_model_list': profile_list}
-        self.model = LensModel(kwargs_options)
+        self.model = LensModel(profile_list)
         self.cosmo = Cosmo(kwargs_cosmo)
         self._interp_grid_num = kwargs_numerics.get('interpol_grid_num', 1000)
         self._max_interpolate = kwargs_numerics.get('max_interpolate', 100)

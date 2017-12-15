@@ -96,7 +96,7 @@ class TestGalkin(object):
         kwargs_profile = [{'theta_E': theta_E, 'gamma': gamma}]  # Einstein radius (arcsec) and power-law slope
 
         # mge of lens profile
-        lensModel = LensModel(kwargs_options={'lens_model_list': mass_profile_list})
+        lensModel = LensModel(mass_profile_list)
         r_array = np.logspace(-2, 1, 100)*theta_E
         kappa_r = lensModel.kappa(r_array, 0, kwargs_profile)
         amps, sigmas, norm = mge.mge_1d(r_array, kappa_r, N=20)
@@ -150,7 +150,7 @@ class TestGalkin(object):
         kwargs_light_mge = [{'amp': amps, 'sigma': sigmas}]
 
         # mge of lens profile
-        lensModel = LensModel(kwargs_options={'lens_model_list': mass_profile_list})
+        lensModel = LensModel(mass_profile_list)
         r_array = np.logspace(-2, 2, 100)
         kappa_r = lensModel.kappa(r_array, 0, kwargs_profile)
         amps, sigmas, norm = mge.mge_1d(r_array, kappa_r, N=20)
