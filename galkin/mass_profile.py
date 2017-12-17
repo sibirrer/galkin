@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from scipy.interpolate import interp1d
-from lenstronomy.ImSim.lens_model import LensModel
+from lenstronomy.LensModel.lens_model import LensModel
 import astrofunc.constants as const
 from cosmo import Cosmo
 
