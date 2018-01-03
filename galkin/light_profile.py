@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 from scipy.interpolate import interp1d
-from lenstronomy.ImSim.light_model import LightModel
+from lenstronomy.LightModel.light_model import LightModel
 
 
 class LightProfile(object):

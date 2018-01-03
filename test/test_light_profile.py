@@ -5,7 +5,7 @@ import pytest
 import numpy.testing as npt
 import numpy as np
 from galkin.light_profile import LightProfile
-from lenstronomy.LensAnalysis.lens_analysis import LensAnalysis
+from lenstronomy.Analysis.lens_analysis import LensAnalysis
 
 
 class TestLightProfile(object):

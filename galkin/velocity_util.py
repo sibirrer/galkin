@@ -19,7 +19,7 @@ def displace_PSF(x, y, FWHM):
     :param FWHM: psf size (arc sec)
     :return: x', y' random displaced according to psf
     """
-    sigma = FWHM/ (2 * np.sqrt(2 * np.log(2)))
+    sigma = FWHM / (2 * np.sqrt(2 * np.log(2)))
     sigma_one_direction = sigma
     x_ = x + np.random.normal() * sigma_one_direction
     y_ = y + np.random.normal() * sigma_one_direction

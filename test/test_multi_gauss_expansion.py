@@ -5,9 +5,9 @@ import pytest
 import numpy.testing as npt
 import astrofunc.multi_gauss_expansion as mge
 import numpy as np
-from lenstronomy.ImSim.light_model import LightModel
+from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.lens_model import LensModel
-from lenstronomy.LensAnalysis.lens_analysis import LensAnalysis
+from lenstronomy.Analysis.lens_analysis import LensAnalysis
 from galkin.galkin import Galkin
 
 
